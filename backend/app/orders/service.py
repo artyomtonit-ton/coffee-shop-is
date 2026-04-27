@@ -7,6 +7,9 @@ from app.loyalty.service import LoyaltyService
 from app.orders.models import Order
 from app.orders.repository import OrderRepository, build_order_item
 from app.orders.schemas import OrderCreate, OrderStatus, OrderStatusUpdate, OrderType
+from app.referrals.repository import ReferralRepository
+from app.referrals.service import ReferralService
+from app.users.repository import UserRepository
 from app.users.models import User
 
 
@@ -98,6 +101,12 @@ class OrderService:
         ):
             loyalty_service = LoyaltyService(LoyaltyRepository(self.repository.db))
             loyalty_service.accrue_for_completed_order(updated_order)
+            referral_service = ReferralService(
+                referral_repository=ReferralRepository(self.repository.db),
+                user_repository=UserRepository(self.repository.db),
+                loyalty_service=loyalty_service,
+            )
+            referral_service.process_first_completed_order_bonus(updated_order)
             return self.repository.get_by_id(updated_order.id) or updated_order
 
         return updated_order

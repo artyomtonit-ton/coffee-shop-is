@@ -94,5 +94,26 @@ class LoyaltyService:
         )
         return bonus_amount
 
+    def add_bonus(
+        self,
+        user_id: int,
+        amount: Decimal,
+        order_id: int | None,
+        description: str,
+    ) -> None:
+        amount = self._normalize_money(amount)
+        if amount <= 0:
+            return
+
+        card = self.repository.get_or_create_card(user_id)
+        self.repository.update_card_balance(card, card.balance + amount)
+        self.repository.add_transaction(
+            card=card,
+            transaction_type=BonusTransactionType.accrual.value,
+            amount=amount,
+            order_id=order_id,
+            description=description,
+        )
+
     def _normalize_money(self, value: Decimal) -> Decimal:
         return value.quantize(MONEY_STEP, rounding=ROUND_DOWN)

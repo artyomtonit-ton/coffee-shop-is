@@ -31,6 +31,7 @@ class UserCreate(BaseModel):
 class UserRead(BaseModel):
     id: int
     email: str
+    referral_code: str
     is_active: bool
     created_at: datetime
     profile: ProfileRead | None = None
