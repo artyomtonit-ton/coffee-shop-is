@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.admin.router import router as admin_router
 from app.auth.router import router as auth_router
+from app.coffee_shop.router import router as coffee_shop_router
 from app.config import settings
 from app.loyalty.router import router as loyalty_router
 from app.menu.router import router as menu_router
@@ -25,6 +26,7 @@ app.include_router(orders_router)
 app.include_router(loyalty_router)
 app.include_router(promotions_router)
 app.include_router(referrals_router)
+app.include_router(coffee_shop_router)
 app.include_router(admin_router)
 
 

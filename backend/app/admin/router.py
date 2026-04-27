@@ -1,6 +1,9 @@
 from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy.orm import Session
 
+from app.coffee_shop.repository import CoffeeShopRepository
+from app.coffee_shop.schemas import CoffeeShopRead, CoffeeShopUpdate
+from app.coffee_shop.service import CoffeeShopService
 from app.database import get_db
 from app.menu.repository import MenuRepository
 from app.menu.schemas import (
@@ -32,6 +35,10 @@ def get_order_service(db: Session = Depends(get_db)) -> OrderService:
 
 def get_promotion_service(db: Session = Depends(get_db)) -> PromotionService:
     return PromotionService(PromotionRepository(db))
+
+
+def get_coffee_shop_service(db: Session = Depends(get_db)) -> CoffeeShopService:
+    return CoffeeShopService(CoffeeShopRepository(db))
 
 
 @router.post("/categories", response_model=CategoryRead, status_code=status.HTTP_201_CREATED)
@@ -106,3 +113,11 @@ def delete_promotion(
 ):
     service.delete_promotion(promotion_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.patch("/coffee-shop", response_model=CoffeeShopRead)
+def update_coffee_shop(
+    coffee_shop_data: CoffeeShopUpdate,
+    service: CoffeeShopService = Depends(get_coffee_shop_service),
+):
+    return service.update_info(coffee_shop_data)
