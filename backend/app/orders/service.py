@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from fastapi import HTTPException, status
 
+from app.loyalty.repository import LoyaltyRepository
+from app.loyalty.service import LoyaltyService
 from app.orders.models import Order
 from app.orders.repository import OrderRepository, build_order_item
 from app.orders.schemas import OrderCreate, OrderStatus, OrderStatusUpdate, OrderType
@@ -29,6 +31,9 @@ class OrderService:
                 detail="Bonus amount cannot be greater than order total",
             )
 
+        loyalty_service = LoyaltyService(LoyaltyRepository(self.repository.db))
+        loyalty_service.validate_bonus_usage(user.id, order_data.bonus_used, total_amount)
+
         order = Order(
             user_id=user.id,
             status=OrderStatus.created.value,
@@ -39,7 +44,14 @@ class OrderService:
             bonus_accrued=Decimal("0.00"),
             items=items,
         )
-        return self.repository.create_order(order)
+        created_order = self.repository.create_order(order)
+        loyalty_service.write_off_for_order(
+            user_id=user.id,
+            order_id=created_order.id,
+            amount=order_data.bonus_used,
+            order_total=total_amount,
+        )
+        return self.repository.get_by_id(created_order.id) or created_order
 
     def get_user_orders(self, user: User) -> list[Order]:
         return self.repository.get_user_orders(user.id)
@@ -78,7 +90,17 @@ class OrderService:
                 detail="Order not found",
             )
 
-        return self.repository.update_status(order, status_data.status.value)
+        previous_status = order.status
+        updated_order = self.repository.update_status(order, status_data.status.value)
+        if (
+            status_data.status == OrderStatus.completed
+            and previous_status != OrderStatus.completed.value
+        ):
+            loyalty_service = LoyaltyService(LoyaltyRepository(self.repository.db))
+            loyalty_service.accrue_for_completed_order(updated_order)
+            return self.repository.get_by_id(updated_order.id) or updated_order
+
+        return updated_order
 
     def _get_available_products(self, order_data: OrderCreate):
         product_ids = [item.product_id for item in order_data.items]

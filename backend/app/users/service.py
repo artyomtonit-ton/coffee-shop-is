@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 
 from app.common.security import get_password_hash
+from app.loyalty.repository import LoyaltyRepository
 from app.users.models import User
 from app.users.repository import UserRepository
 from app.users.schemas import UserCreate
@@ -22,7 +23,9 @@ class UserService:
             )
 
         hashed_password = get_password_hash(user_data.password)
-        return self.repository.create(user_data, hashed_password)
+        user = self.repository.create(user_data, hashed_password)
+        LoyaltyRepository(self.repository.db).get_or_create_card(user.id)
+        return user
 
     def get_current_user_profile(self, user: User) -> User:
         return user
