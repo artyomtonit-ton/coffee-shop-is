@@ -19,6 +19,15 @@ class Settings(BaseSettings):
         validation_alias="DATABASE_URL",
     )
     database_echo: bool = Field(default=False, validation_alias="DATABASE_ECHO")
+    secret_key: str = Field(
+        default="change_this_secret_key",
+        validation_alias="SECRET_KEY",
+    )
+    algorithm: str = Field(default="HS256", validation_alias="ALGORITHM")
+    access_token_expire_minutes: int = Field(
+        default=30,
+        validation_alias="ACCESS_TOKEN_EXPIRE_MINUTES",
+    )
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",

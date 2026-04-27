@@ -5,4 +5,5 @@ alembic
 psycopg2-binary
 pydantic
 pydantic-settings
+python-jose[cryptography]
 python-dotenv
