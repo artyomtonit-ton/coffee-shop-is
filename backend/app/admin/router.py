@@ -14,6 +14,9 @@ from app.menu.service import MenuService
 from app.orders.repository import OrderRepository
 from app.orders.schemas import OrderRead, OrderStatusUpdate
 from app.orders.service import OrderService
+from app.promotions.repository import PromotionRepository
+from app.promotions.schemas import PromotionCreate, PromotionRead, PromotionUpdate
+from app.promotions.service import PromotionService
 
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -25,6 +28,10 @@ def get_menu_service(db: Session = Depends(get_db)) -> MenuService:
 
 def get_order_service(db: Session = Depends(get_db)) -> OrderService:
     return OrderService(OrderRepository(db))
+
+
+def get_promotion_service(db: Session = Depends(get_db)) -> PromotionService:
+    return PromotionService(PromotionRepository(db))
 
 
 @router.post("/categories", response_model=CategoryRead, status_code=status.HTTP_201_CREATED)
@@ -73,3 +80,29 @@ def update_order_status(
     service: OrderService = Depends(get_order_service),
 ):
     return service.update_order_status(order_id, status_data)
+
+
+@router.post("/promotions", response_model=PromotionRead, status_code=status.HTTP_201_CREATED)
+def create_promotion(
+    promotion_data: PromotionCreate,
+    service: PromotionService = Depends(get_promotion_service),
+):
+    return service.create_promotion(promotion_data)
+
+
+@router.patch("/promotions/{promotion_id}", response_model=PromotionRead)
+def update_promotion(
+    promotion_id: int,
+    promotion_data: PromotionUpdate,
+    service: PromotionService = Depends(get_promotion_service),
+):
+    return service.update_promotion(promotion_id, promotion_data)
+
+
+@router.delete("/promotions/{promotion_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_promotion(
+    promotion_id: int,
+    service: PromotionService = Depends(get_promotion_service),
+):
+    service.delete_promotion(promotion_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
