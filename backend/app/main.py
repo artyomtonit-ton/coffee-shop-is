@@ -1,10 +1,14 @@
-﻿from fastapi import FastAPI
+from fastapi import FastAPI
+
+from app.config import settings
+
 
 app = FastAPI(
-    title="Coffee Shop Information System",
+    title=settings.app_name,
     description="Diploma project: information system for a coffee shop",
-    version="0.1.0"
+    version=settings.app_version,
 )
+
 
 @app.get("/health")
 def health_check():
