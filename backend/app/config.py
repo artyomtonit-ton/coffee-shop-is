@@ -18,6 +18,7 @@ class Settings(BaseSettings):
         default="postgresql://postgres:postgres@localhost:5432/coffee_shop_db",
         validation_alias="DATABASE_URL",
     )
+    database_echo: bool = Field(default=False, validation_alias="DATABASE_ECHO")
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env",
