@@ -47,13 +47,19 @@ class OrderService:
             bonus_accrued=Decimal("0.00"),
             items=items,
         )
-        created_order = self.repository.create_order(order)
-        loyalty_service.write_off_for_order(
-            user_id=user.id,
-            order_id=created_order.id,
-            amount=order_data.bonus_used,
-            order_total=total_amount,
-        )
+        try:
+            created_order = self.repository.create_order(order)
+            loyalty_service.write_off_for_order(
+                user_id=user.id,
+                order_id=created_order.id,
+                amount=order_data.bonus_used,
+                order_total=total_amount,
+            )
+            self.repository.db.commit()
+        except Exception:
+            self.repository.db.rollback()
+            raise
+
         return self.repository.get_by_id(created_order.id) or created_order
 
     def get_user_orders(self, user: User) -> list[Order]:
@@ -76,7 +82,14 @@ class OrderService:
                 detail="Completed or cancelled orders cannot be cancelled",
             )
 
-        return self.repository.update_status(order, OrderStatus.cancelled.value)
+        try:
+            updated_order = self.repository.update_status(order, OrderStatus.cancelled.value)
+            self.repository.db.commit()
+        except Exception:
+            self.repository.db.rollback()
+            raise
+
+        return updated_order
 
     def get_all_orders(self) -> list[Order]:
         return self.repository.get_all_orders()
@@ -93,23 +106,28 @@ class OrderService:
                 detail="Order not found",
             )
 
-        previous_status = order.status
-        updated_order = self.repository.update_status(order, status_data.status.value)
-        if (
-            status_data.status == OrderStatus.completed
-            and previous_status != OrderStatus.completed.value
-        ):
-            loyalty_service = LoyaltyService(LoyaltyRepository(self.repository.db))
-            loyalty_service.accrue_for_completed_order(updated_order)
-            referral_service = ReferralService(
-                referral_repository=ReferralRepository(self.repository.db),
-                user_repository=UserRepository(self.repository.db),
-                loyalty_service=loyalty_service,
-            )
-            referral_service.process_first_completed_order_bonus(updated_order)
-            return self.repository.get_by_id(updated_order.id) or updated_order
+        try:
+            previous_status = order.status
+            updated_order = self.repository.update_status(order, status_data.status.value)
+            if (
+                status_data.status == OrderStatus.completed
+                and previous_status != OrderStatus.completed.value
+            ):
+                loyalty_service = LoyaltyService(LoyaltyRepository(self.repository.db))
+                loyalty_service.accrue_for_completed_order(updated_order)
+                referral_service = ReferralService(
+                    referral_repository=ReferralRepository(self.repository.db),
+                    user_repository=UserRepository(self.repository.db),
+                    loyalty_service=loyalty_service,
+                )
+                referral_service.process_first_completed_order_bonus(updated_order)
 
-        return updated_order
+            self.repository.db.commit()
+        except Exception:
+            self.repository.db.rollback()
+            raise
+
+        return self.repository.get_by_id(updated_order.id) or updated_order
 
     def _get_available_products(self, order_data: OrderCreate):
         product_ids = [item.product_id for item in order_data.items]

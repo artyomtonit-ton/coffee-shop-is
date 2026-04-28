@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     app_version: str = Field(default="0.1.0", validation_alias="APP_VERSION")
     debug: bool = Field(default=False, validation_alias="APP_DEBUG")
     database_url: str = Field(
-        default="postgresql://postgres:postgres@localhost:5432/coffee_shop_db",
+        default="postgresql://postgres:postgres@127.0.0.1:5433/coffee_shop_db",
         validation_alias="DATABASE_URL",
     )
     database_echo: bool = Field(default=False, validation_alias="DATABASE_ECHO")

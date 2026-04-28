@@ -15,7 +15,7 @@ class OrderRepository:
 
     def create_order(self, order: Order) -> Order:
         self.db.add(order)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(order)
         return self.get_by_id(order.id) or order
 
@@ -46,7 +46,7 @@ class OrderRepository:
 
     def update_status(self, order: Order, status: str) -> Order:
         order.status = status
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(order)
         return self.get_by_id(order.id) or order
 

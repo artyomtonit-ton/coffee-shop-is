@@ -42,6 +42,6 @@ class ReferralRepository:
     def mark_bonus_awarded(self, referral: Referral) -> Referral:
         referral.bonus_awarded = True
         referral.bonus_awarded_at = datetime.now(UTC)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(referral)
         return referral

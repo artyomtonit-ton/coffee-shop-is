@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.coffee_shop.repository import CoffeeShopRepository
 from app.coffee_shop.schemas import CoffeeShopRead, CoffeeShopUpdate
 from app.coffee_shop.service import CoffeeShopService
+from app.common.dependencies import get_current_admin_user
 from app.database import get_db
 from app.menu.repository import MenuRepository
 from app.menu.schemas import (
@@ -22,7 +23,11 @@ from app.promotions.schemas import PromotionCreate, PromotionRead, PromotionUpda
 from app.promotions.service import PromotionService
 
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(
+    prefix="/admin",
+    tags=["admin"],
+    dependencies=[Depends(get_current_admin_user)],
+)
 
 
 def get_menu_service(db: Session = Depends(get_db)) -> MenuService:

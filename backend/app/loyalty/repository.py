@@ -49,7 +49,7 @@ class LoyaltyRepository:
             description=description,
         )
         self.db.add(transaction)
-        self.db.commit()
+        self.db.flush()
         self.db.refresh(transaction)
         self.db.refresh(card)
         return transaction
